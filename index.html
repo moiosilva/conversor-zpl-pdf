@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Converta etiquetas ZPL em PDF diretamente no navegador." />
+  <title>ZPL → PDF | Conversor de etiquetas</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Página inicial">
+      <span class="brand-mark">Z</span>
+      <span>ZPL <b>→ PDF</b></span>
+    </a>
+    <span class="privacy"><i></i> Processamento local e privado</span>
+  </header>
+
+  <main>
+    <section class="intro">
+      <div>
+        <span class="eyebrow">CONVERSOR DE ETIQUETAS</span>
+        <h1>Do código à etiqueta.<br><em>Em segundos.</em></h1>
+      </div>
+      <p>Cole o código ZPL ou envie vários arquivos para reunir todas as etiquetas em um único PDF pronto para imprimir.</p>
+    </section>
+
+    <section class="workspace">
+      <div class="editor-panel">
+        <div class="panel-heading">
+          <div><span class="step">01</span><h2>Insira seu ZPL</h2></div>
+          <button id="sampleBtn" class="link-button" type="button">Usar exemplo</button>
+        </div>
+
+        <div id="dropzone" class="dropzone">
+          <input id="fileInput" type="file" accept=".zpl,.txt,text/plain" multiple hidden />
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v4a2 2 0 002 2h10a2 2 0 002-2v-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <p><button id="chooseFile" type="button">Escolha seus arquivos</button> ou arraste todos aqui</p>
+          <span>ZPL ou TXT · vários arquivos · até 5 MB cada</span>
+        </div>
+        <div id="fileList" class="file-list" hidden></div>
+
+        <div class="or"><span>OU COLE O CÓDIGO</span></div>
+        <label class="sr-only" for="zplInput">Código ZPL</label>
+        <textarea id="zplInput" spellcheck="false" placeholder="^XA&#10;^FO50,50^A0N,40,40^FDSua etiqueta^FS&#10;^XZ"></textarea>
+        <div class="editor-footer"><span id="charCount">0 caracteres</span><button id="clearBtn" type="button">Limpar</button></div>
+
+        <div class="settings-title"><span class="step">02</span><h2>Configure a página</h2></div>
+        <div class="settings-grid">
+          <label>Tamanho da etiqueta
+            <select id="sizeSelect">
+              <option value="100x150">100 × 150 mm — Envios</option>
+              <option value="100x100">100 × 100 mm</option>
+              <option value="80x50">80 × 50 mm</option>
+              <option value="custom">Personalizado</option>
+            </select>
+          </label>
+          <label>Resolução
+            <select id="dpiSelect">
+              <option value="203">203 dpi — padrão</option>
+              <option value="300">300 dpi — alta definição</option>
+            </select>
+          </label>
+        </div>
+        <div id="customSize" class="custom-size" hidden>
+          <label>Largura (mm)<input id="widthInput" type="number" min="20" max="300" value="100"></label>
+          <label>Altura (mm)<input id="heightInput" type="number" min="20" max="500" value="150"></label>
+        </div>
+
+        <button id="convertBtn" class="primary" type="button"><span>Gerar prévia</span><b>→</b></button>
+        <p id="errorMessage" class="error" role="alert" hidden></p>
+      </div>
+
+      <aside class="preview-panel">
+        <div class="panel-heading preview-heading">
+          <div><span class="step">03</span><h2>Prévia</h2></div>
+          <span id="pageBadge" class="badge">0 etiquetas</span>
+        </div>
+        <div id="previewArea" class="preview-area">
+          <div id="emptyState" class="empty-state">
+            <div class="paper-icon"><span></span><span></span><span></span></div>
+            <h3>Sua etiqueta aparecerá aqui</h3>
+            <p>Insira o código ZPL e clique em “Gerar prévia”.</p>
+          </div>
+          <div id="canvasList" class="canvas-list"></div>
+        </div>
+        <div class="download-row">
+          <div><strong id="pdfInfo">PDF não gerado</strong><span id="pdfMeta">Configure e gere uma prévia</span></div>
+          <button id="downloadBtn" class="download" type="button" disabled>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Baixar PDF
+          </button>
+        </div>
+      </aside>
+    </section>
+    <p class="support-note">Selecione vários arquivos para gerar um único PDF. Compatível com textos, linhas, caixas, Code 128 e etiquetas Z64.</p>
+  </main>
+
+  <footer><span>ZPL → PDF</span><p>Feito para agilizar sua operação.</p><p>Seus arquivos não saem do navegador.</p></footer>
+  <script src="app.js"></script>
+</body>
+</html>
