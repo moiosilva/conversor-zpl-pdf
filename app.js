@@ -27,6 +27,7 @@ $('#clearBtn').addEventListener('click', () => { state.files=[]; updateFileList(
 $('#zplInput').addEventListener('input', updateCount);
 $('#convertBtn').addEventListener('click', generate);
 $('#downloadBtn').addEventListener('click', downloadPdf);
+$('#clearHistoryBtn').addEventListener('click', clearHistory);
 
 const dropzone = $('#dropzone');
 $('#chooseFile').addEventListener('click', () => $('#fileInput').click());
@@ -206,14 +207,59 @@ function drawCode128(ctx,text,x,y,h,moduleW,showText){
   if(showText){ ctx.font='18px Arial'; ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText(text,(x+pos)/2,y+h+7); } ctx.restore();
 }
 
-function downloadPdf(){
+async function downloadPdf(){
   if(!state.canvases.length) return;
   try{
     const images=state.canvases.map(c=>dataUrlBytes(c.toDataURL('image/jpeg',.94)));
     const pdf=makePdf(images,state.canvases[0].width,state.canvases[0].height,state.widthMm,state.heightMm);
-    const blob=new Blob([pdf],{type:'application/pdf'}), a=document.createElement('a');
-    a.href=URL.createObjectURL(blob); a.download=`etiquetas-${new Date().toISOString().slice(0,10)}.pdf`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+    const blob=new Blob([pdf],{type:'application/pdf'}), now=new Date();
+    const stamp=now.toLocaleString('sv-SE',{hour12:false}).replace(' ','_').replaceAll(':','-');
+    const name=`etiquetas-${stamp}.pdf`;
+    triggerDownload(blob,name);
+    await saveGeneratedFile({id:`${Date.now()}-${Math.random().toString(16).slice(2)}`,name,createdAt:now.toISOString(),labels:state.canvases.length,size:blob.size,blob});
+    $('#downloadNotice').hidden=false;
+    $('#downloadNotice').textContent=`${name} foi baixado. Procure na pasta Downloads ou pressione Ctrl + J.`;
+    await renderHistory();
   }catch(e){ console.error(e); showError('Não foi possível gerar o PDF. Tente reduzir a quantidade de etiquetas.'); }
+}
+function triggerDownload(blob,name){
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+}
+function openHistoryDb(){
+  return new Promise((resolve,reject)=>{ const request=indexedDB.open('zpl-pdf-history',1); request.onupgradeneeded=()=>request.result.createObjectStore('files',{keyPath:'id'}); request.onsuccess=()=>resolve(request.result); request.onerror=()=>reject(request.error); });
+}
+async function getGeneratedFiles(){
+  const db=await openHistoryDb();
+  const records=await new Promise((resolve,reject)=>{ const request=db.transaction('files').objectStore('files').getAll(); request.onsuccess=()=>resolve(request.result); request.onerror=()=>reject(request.error); });
+  db.close(); return records.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+}
+async function deleteGeneratedFiles(ids){
+  if(!ids.length) return; const db=await openHistoryDb();
+  await new Promise((resolve,reject)=>{ const tx=db.transaction('files','readwrite'); ids.forEach(id=>tx.objectStore('files').delete(id)); tx.oncomplete=resolve; tx.onerror=()=>reject(tx.error); }); db.close();
+}
+async function saveGeneratedFile(record){
+  const db=await openHistoryDb();
+  await new Promise((resolve,reject)=>{ const tx=db.transaction('files','readwrite'); tx.objectStore('files').put(record); tx.oncomplete=resolve; tx.onerror=()=>reject(tx.error); }); db.close();
+  const records=await getGeneratedFiles(); if(records.length>10) await deleteGeneratedFiles(records.slice(10).map(item=>item.id));
+}
+async function clearHistory(){
+  const db=await openHistoryDb(); await new Promise((resolve,reject)=>{ const tx=db.transaction('files','readwrite'); tx.objectStore('files').clear(); tx.oncomplete=resolve; tx.onerror=()=>reject(tx.error); }); db.close(); await renderHistory();
+}
+async function renderHistory(){
+  try{
+    const records=await getGeneratedFiles(), list=$('#historyList'); list.innerHTML='';
+    $('#historyEmpty').hidden=records.length>0; $('#clearHistoryBtn').hidden=records.length===0;
+    records.forEach(record=>{
+      const row=document.createElement('div'); row.className='history-item';
+      const details=document.createElement('div'); details.className='history-details';
+      const name=document.createElement('span'); name.className='history-name'; name.textContent=record.name;
+      const meta=document.createElement('span'); meta.className='history-meta';
+      const time=new Date(record.createdAt).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
+      meta.textContent=`${time} · ${record.labels} ${record.labels===1?'etiqueta':'etiquetas'} · ${formatBytes(record.size)}`;
+      const again=document.createElement('button'); again.type='button'; again.className='history-download'; again.textContent='Baixar novamente'; again.addEventListener('click',()=>triggerDownload(record.blob,record.name));
+      details.append(name,meta); row.append(details,again); list.appendChild(row);
+    });
+  }catch(error){ console.error(error); $('#historyEmpty').textContent='O histórico não está disponível neste navegador.'; }
 }
 function dataUrlBytes(url){ const bin=atob(url.split(',')[1]), out=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i); return out; }
 function makePdf(images,imgW,imgH,wMm,hMm){
@@ -233,3 +279,4 @@ function makePdf(images,imgW,imgH,wMm,hMm){
 }
 
 updateCount();
+renderHistory();
