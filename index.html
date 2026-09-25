@@ -91,6 +91,16 @@
             Baixar PDF
           </button>
         </div>
+        <div id="downloadNotice" class="download-notice" role="status" hidden></div>
+        <section class="history-panel" aria-labelledby="historyTitle">
+          <div class="history-heading">
+            <div><span class="step">04</span><h2 id="historyTitle">Arquivos gerados</h2></div>
+            <button id="clearHistoryBtn" class="link-button" type="button" hidden>Limpar histórico</button>
+          </div>
+          <p class="downloads-tip">Os arquivos ficam na pasta <strong>Downloads</strong> do computador. Pressione <kbd>Ctrl</kbd> + <kbd>J</kbd> para localizar os downloads recentes.</p>
+          <div id="historyEmpty" class="history-empty">Os PDFs gerados aparecerão aqui com nome e horário.</div>
+          <div id="historyList" class="history-list" aria-live="polite"></div>
+        </section>
       </aside>
     </section>
     <p class="support-note">Selecione vários arquivos para gerar um único PDF. Compatível com textos, linhas, caixas, Code 128 e etiquetas Z64.</p>
